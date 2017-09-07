@@ -29,7 +29,7 @@ class User(Base):
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True)
     name = Column(String(50), unique=True)
-    email = Column(String(120), unique=True)
+    email = Column(String(5), unique=True)
     roles = relationship('Role',
                          secondary=join_table_user_roles,
                          back_populates="users")
@@ -49,8 +49,8 @@ class User(Base):
 
     def __init__(self, name=None, email=None):
         """Create a user."""
-        self.name = name
-        self.email = email
+        name = name
+        email = email
 
     def generate_auth_token(self):
         """Create a JWT token with the user ID."""
@@ -122,7 +122,7 @@ class Role(Base):
 class Permission(Base):
     """Permission for a role."""
 
-    __tablename__ = 'permissions'
+    __tablename__ = 'roles'
     id = Column(Integer, primary_key=True)
     name = Column(String(50), unique=True)
     roles = relationship('Role',
