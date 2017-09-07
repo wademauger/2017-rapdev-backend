@@ -55,7 +55,7 @@ def includes_user(f):
     def decorated_function(*args, **kwargs):
         if 'Authorization' not in request.headers or \
                 not request.headers['Authorization'].startswith('Bearer '):
-            abort(401, "missing or invalid authorization token")
+                    abort(401, "missing or invalid authorization token")
         else:
             token = request.headers['Authorization'][len('Bearer '):]
             u = User.verify_auth_token(token)
@@ -78,8 +78,8 @@ def json_param_exists(param_name, json_root=-1):
     if json_root == -1:
         json_root = request.json
     return json_root and \
-        param_name in json_root and \
-        json_root[param_name] is not None
+            param_name in json_root and \
+            json_root[param_name] is not None
 
 
 @app.teardown_appcontext
@@ -88,7 +88,7 @@ def shutdown_session(exception=None):
     get_db().remove()
 
 
-@app.route('/v1/auth', methods=['POST'])
+@app.route('/auth', methods=['POST'])
 @returns_json
 def auth():
     """Authenticate users."""
@@ -115,7 +115,7 @@ def auth():
     return json.dumps({'token': encoded})
 
 
-@app.route('/v1/user/<int:user_id>', methods=['GET'])
+@app.route('/user/<int:user_id>', methods=['GET'])
 @returns_json
 # TODO secure this?
 def user_read(user_id):
@@ -128,7 +128,7 @@ def user_read(user_id):
     return json.dumps(user.as_dict(include_teams_and_permissions=True))
 
 
-@app.route('/v1/user', methods=['GET'])
+@app.route('/user', methods=['GET'])
 @returns_json
 def user_search_partial():
     """Get a user id from a partial user name."""
@@ -139,20 +139,20 @@ def user_search_partial():
         ret.append({
             "id": user.id,
             "name": user.name
-        })
-    return json.dumps(ret)
+            })
+        return json.dumps(ret)
 
 
 # team CRUD
 
-@app.route('/v1/team', methods=['POST'])
+@app.route('/team', methods=['POST'])
 @returns_json
 @includes_user
 def team_add(token_user):
     """Add a team given a team name."""
     if not json_param_exists('name') or \
             not json_param_exists('type'):
-        abort(400, "one or more required parameter is missing")
+                abort(400, "one or more required parameter is missing")
     name = request.json['name']
     team_type = TeamType.query.filter_by(name=request.json['type']).first()
     if not team_type:
@@ -161,7 +161,7 @@ def team_add(token_user):
     if team_type.name == 'other_team':
         if not token_user.has_permission('team.create') and \
                 not token_user.has_permission('team.create.elevated'):
-            abort(403, 'team creation is not permitted')
+                    abort(403, 'team creation is not permitted')
     else:  # creating any team other than 'other_team' requires elevated
         if not token_user.has_permission('team.create.elevated'):
             abort(403, 'insufficient permissions to create a team of this type')
@@ -178,7 +178,7 @@ def team_add(token_user):
     return '', 201
 
 
-@app.route('/v1/team/<int:team_id>', methods=['GET'])
+@app.route('/team/<int:team_id>', methods=['GET'])
 @returns_json
 @includes_user
 def team_read(token_user, team_id):
@@ -190,7 +190,7 @@ def team_read(token_user, team_id):
     return json.dumps(team.as_dict(for_user=token_user))
 
 
-@app.route('/v1/team/<int:team_id>', methods=['PUT'])
+@app.route('/team/<int:team_id>', methods=['PUT'])
 @returns_json
 @includes_user
 def team_update(token_user, team_id):
@@ -207,8 +207,8 @@ def team_update(token_user, team_id):
 
     if not (token_user.has_permission('team.update.elevated') or
             (token_user.has_permission('team.update') and
-             team.has_member(token_user))):
-        abort(403, 'insufficient permissions to modify team')
+                team.has_member(token_user))):
+                abort(403, 'insufficient permissions to modify team')
 
     team.name = name
 
@@ -221,7 +221,7 @@ def team_update(token_user, team_id):
     return '', 204
 
 
-@app.route('/v1/team/<int:team_id>', methods=['DELETE'])
+@app.route('/team/<int:team_id>', methods=['DELETE'])
 @returns_json
 @includes_user
 def team_delete(token_user, team_id):
@@ -236,8 +236,8 @@ def team_delete(token_user, team_id):
     # check for permissions to delete the team
     if not (token_user.has_permission('team.delete.elevated') or
             (token_user.has_permission('team.delete') and
-             team.has_member(token_user))):
-        abort(403, 'insufficient permissions to delete team')
+                team.has_member(token_user))):
+                abort(403, 'insufficient permissions to delete team')
 
     # deschedule reservations for the team then delete the team
     Reservation.query.filter_by(team_id=team.id).delete()
@@ -249,7 +249,7 @@ def team_delete(token_user, team_id):
 
 # add/remove user to team
 
-@app.route('/v1/team/<int:team_id>/user/<int:user_id>', methods=['POST'])
+@app.route('/team/<int:team_id>/user/<int:user_id>', methods=['POST'])
 @returns_json
 @includes_user
 def team_user_add(token_user, team_id, user_id):
@@ -261,8 +261,8 @@ def team_user_add(token_user, team_id, user_id):
     # check for permissions to update the team
     if not (token_user.has_permission('team.update.elevated') or
             (token_user.has_permission('team.update') and
-             team.has_member(token_user))):
-        abort(403, 'insufficient permissions to add user to team')
+                team.has_member(token_user))):
+                abort(403, 'insufficient permissions to add user to team')
 
     # don't allow adding to 'single' teams
     if team.team_type == TeamType.query.filter_by(name='single').first():
@@ -281,7 +281,7 @@ def team_user_add(token_user, team_id, user_id):
     return '', 201
 
 
-@app.route('/v1/team/<int:team_id>/user/<int:user_id>', methods=['DELETE'])
+@app.route('/team/<int:team_id>/user/<int:user_id>', methods=['DELETE'])
 @returns_json
 @includes_user
 def team_user_delete(token_user, team_id, user_id):
@@ -296,8 +296,8 @@ def team_user_delete(token_user, team_id, user_id):
     # check for permissions to delete the team
     if not (token_user.has_permission('team.update.elevated') or
             (token_user.has_permission('team.update') and
-             team.has_member(token_user))):
-        abort(403, 'insufficient permissions to delete user from team')
+                team.has_member(token_user))):
+                abort(403, 'insufficient permissions to delete user from team')
 
     user = User.query.get(user_id)
     if user is None:
@@ -311,7 +311,7 @@ def team_user_delete(token_user, team_id, user_id):
 
 # reservation CRUD
 
-@app.route('/v1/reservation', methods=['POST'])
+@app.route('/reservation', methods=['POST'])
 @returns_json
 @includes_user
 def reservation_add(token_user):
@@ -320,10 +320,10 @@ def reservation_add(token_user):
     Uses the team ID, room ID, created by ID, start and end date times.
     """
     if not json_param_exists('team_id') or \
-       not json_param_exists('room_id') or \
-       not json_param_exists('start') or \
-       not json_param_exists('end'):
-        abort(400, 'one or more required parameter is missing')
+            not json_param_exists('room_id') or \
+            not json_param_exists('start') or \
+            not json_param_exists('end'):
+                abort(400, 'one or more required parameter is missing')
 
     team_id = request.json['team_id']
     team = Team.query.get(team_id)
@@ -347,7 +347,7 @@ def reservation_add(token_user):
         abort(400, "start time must be before end time")
 
     res = Reservation(team=team, room=room, created_by=token_user,
-                      start=start, end=end)
+            start=start, end=end)
 
     attempt_override = False
     if json_param_exists("override") and isinstance(request.json["override"], bool):
@@ -372,7 +372,7 @@ def reservation_add(token_user):
     return '', 201
 
 
-@app.route('/v1/reservation/<int:res_id>', methods=['GET'])
+@app.route('/reservation/<int:res_id>', methods=['GET'])
 @returns_json
 @includes_user
 def reservation_read(token_user, res_id):
@@ -384,7 +384,7 @@ def reservation_read(token_user, res_id):
     return json.dumps(res.as_dict(for_user=token_user))
 
 
-@app.route('/v1/reservation/<int:res_id>', methods=['PUT'])
+@app.route('/reservation/<int:res_id>', methods=['PUT'])
 @returns_json
 @includes_user
 def reservation_update(token_user, res_id):
@@ -393,9 +393,9 @@ def reservation_update(token_user, res_id):
     Uses a room ID, start and end datetimes.
     """
     if not json_param_exists('room_id') or \
-       not json_param_exists('start') or \
-       not json_param_exists('end'):
-        abort(400, 'one or more required parameter is missing')
+            not json_param_exists('start') or \
+            not json_param_exists('end'):
+                abort(400, 'one or more required parameter is missing')
 
     room_id = request.json['room_id']
     room = Room.query.get(room_id)
@@ -413,7 +413,7 @@ def reservation_update(token_user, res_id):
 
     if not token_user.has_permission('reservation.update.elevated'):
         is_my_reservation = any(map(lambda m: m.id == token_user.id,
-                                    res.team.members))
+            res.team.members))
         if not (is_my_reservation and
                 token_user.has_permission('reservation.update')):
             abort(403, 'insufficient permissions to update reservation')
@@ -444,7 +444,7 @@ def reservation_update(token_user, res_id):
     return '', 204
 
 
-@app.route('/v1/reservation/<int:res_id>', methods=['DELETE'])
+@app.route('/reservation/<int:res_id>', methods=['DELETE'])
 @returns_json
 @includes_user
 def reservation_delete(token_user, res_id):
@@ -457,7 +457,7 @@ def reservation_delete(token_user, res_id):
         is_my_reservation = any(map(lambda m: m.id == token_user.id,
             res.team.members))
         if not (is_my_reservation and
-            token_user.has_permission('reservation.delete')):
+                token_user.has_permission('reservation.delete')):
             abort(403, 'insufficient permissions to delete reservation')
 
     get_db().delete(res)
@@ -468,7 +468,7 @@ def reservation_delete(token_user, res_id):
 
 # room CRUD
 
-@app.route('/v1/room', methods=['GET'])
+@app.route('/room', methods=['GET'])
 @returns_json
 def room_list():
     """List all rooms."""
@@ -479,7 +479,7 @@ def room_list():
     return json.dumps(rooms)
 
 
-@app.route('/v1/room', methods=['POST'])
+@app.route('/room', methods=['POST'])
 @returns_json
 # TODO secure this
 def room_add():
@@ -501,7 +501,7 @@ def room_add():
     return json.dumps(room.as_dict(include_features=False)), 201
 
 
-@app.route('/v1/room/<int:room_id>', methods=['GET'])
+@app.route('/room/<int:room_id>', methods=['GET'])
 @returns_json
 def room_read(room_id):
     """Get a room's info given its ID."""
@@ -512,7 +512,7 @@ def room_read(room_id):
     return json.dumps(room.as_dict(include_features=True))
 
 
-@app.route('/v1/room/<int:room_id>', methods=['PUT'])
+@app.route('/room/<int:room_id>', methods=['PUT'])
 @returns_json
 # TODO secure this
 def room_update(room_id):
@@ -548,7 +548,7 @@ def room_update(room_id):
     return '', 204
 
 
-@app.route('/v1/room/<int:room_id>', methods=['DELETE'])
+@app.route('/room/<int:room_id>', methods=['DELETE'])
 @returns_json
 # TODO secure this
 def room_delete(room_id):
@@ -563,7 +563,7 @@ def room_delete(room_id):
     return '', 204
 
 
-@app.route('/v1/feature', methods=['GET'])
+@app.route('/feature', methods=['GET'])
 @returns_json
 def feature_list():
     """List all rooms."""
@@ -574,7 +574,7 @@ def feature_list():
     return json.dumps(features)
 
 
-@app.route('/v1/reservation', methods=['GET'])
+@app.route('/reservation', methods=['GET'])
 @returns_json
 def get_reservations():
     """Get a filtered reservation list.
@@ -591,13 +591,13 @@ def get_reservations():
             abort(400, 'cannot parse start or end date')
 
         reservations = Reservation.query.filter(
-            Reservation.end >= start, Reservation.start <= end)
+                Reservation.end >= start, Reservation.start <= end)
     else:
         reservations = Reservation.query.filter(
-            or_(Reservation.start >= datetime.datetime.now(),
-                Reservation.end >= datetime.datetime.now()))
+                or_(Reservation.start >= datetime.datetime.now(),
+                    Reservation.end >= datetime.datetime.now()))
 
-    reservations = map(lambda x: x.as_dict(), reservations)
+                reservations = map(lambda x: x.as_dict(), reservations)
 
     return json.dumps(reservations)
 
